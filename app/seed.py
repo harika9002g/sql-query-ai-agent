@@ -134,10 +134,16 @@ def build_database(db_path: Path | None = None, schema_path: Path | None = None)
     conn.executemany("INSERT INTO Products VALUES (?, ?, ?, ?, ?, ?)", products)
 
     orders, items, item_id = [], [], 1
+    last_day = date(2025, 10, 31)
     for oid in range(1, 801):
-        cust = rng.choice(customers)
+        # Every customer places a first order within ~90 days of signing up (orders 1-200);
+        # the remaining orders are spread between signup and the end of the dataset.
+        cust = customers[oid - 1] if oid <= len(customers) else rng.choice(customers)
         signup = date.fromisoformat(cust[7])
-        order_date = _rand_date(rng, max(signup, date(2023, 1, 1)), date(2025, 10, 31))
+        if oid <= len(customers):
+            order_date = min(signup + timedelta(days=rng.randint(0, 90)), last_day)
+        else:
+            order_date = _rand_date(rng, signup, last_day)
         status = rng.choices(["Delivered", "Shipped", "Pending", "Cancelled"], weights=[60, 15, 15, 10])[0]
         shipped = (order_date + timedelta(days=rng.randint(1, 6))).isoformat() if status in ("Delivered", "Shipped") else None
         total = 0.0

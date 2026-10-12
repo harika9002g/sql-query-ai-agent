@@ -213,7 +213,16 @@ tbody tr:hover td { background: var(--surface-2); }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .drawer-head h2 { margin: 0; font-size: 16px; }
 .drawer-body { overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
-.schema-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.schema-table { flex: none; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.schema-table summary { list-style: none; }
+.schema-table summary::-webkit-details-marker { display: none; }
+.schema-table summary b::before { content: "▸"; display: inline-block; width: 16px; color: var(--muted); transition: transform .15s; }
+.schema-table[open] summary b::before { transform: rotate(90deg); }
+.schema-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 12px 0; }
+.schema-sample { padding: 6px 12px 12px; }
+.schema-sample .table-wrap { max-height: 220px; }
+.schema-cols .values { flex-basis: 100%; padding-left: 2px; }
+.dialect-note { margin: 8px 0 0; }
 .schema-table summary { padding: 9px 12px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; background: var(--surface-2); }
 .schema-table summary span { color: var(--muted); font-weight: 400; font-size: 12px; }
 .schema-cols { list-style: none; margin: 0; padding: 6px 12px 10px; font-size: 13px; }
@@ -248,3 +257,6 @@ tbody tr:hover td { background: var(--surface-2); }
   .output { padding: 16px; }
   .msg { max-width: 100%; }
 }
+
+/* Keep after any `font:` shorthand (which resets ligatures): show >= as typed, not as a glyph. */
+.code, .sql-preview, .plan, code { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

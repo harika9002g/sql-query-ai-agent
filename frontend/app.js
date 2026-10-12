@@ -293,6 +293,12 @@
     const d = $("#dialect").value;
     const sql = (shown.dialects && shown.dialects[d]) || shown.sql;
     $("#sql-code").innerHTML = highlight(sql);
+    const base = (shown.dialects && shown.dialects.sqlite) || shown.sql;
+    const names = { sqlite: "SQLite", postgres: "PostgreSQL", mysql: "MySQL" };
+    $("#dialect-note").textContent = d === "sqlite"
+      ? "Executed against SQLite. Switch dialect to see this query rewritten for PostgreSQL or MySQL."
+      : sql === base ? `No changes needed — this query is valid ${names[d]} as written.`
+      : `Rewritten for ${names[d]}: identifiers are quoted${d === "postgres" ? " (PostgreSQL folds unquoted names to lower case)" : ""} and dialect-specific functions are translated.`;
   }
 
   function renderResults(r) {
@@ -382,13 +388,31 @@
       body.append(el("p", { class: "muted", style: "margin:0" }, "SQLite · the agent may only use these tables and columns."));
       for (const t of data.tables) {
         const fks = Object.fromEntries(t.foreign_keys.map((f) => [f.column, `${f.ref_table}.${f.ref_column}`]));
-        body.append(el("details", { class: "schema-table" },
-          el("summary", {}, t.name, el("span", {}, `${t.row_count} rows`)),
+        const sample = el("div", { class: "schema-sample" }, el("div", { class: "muted" }, "Loading sample rows…"));
+        const details = el("details", { class: "schema-table" },
+          el("summary", {}, el("b", {}, t.name), el("span", {}, `${t.row_count} rows · ${t.columns.length} columns`)),
+          el("div", { class: "schema-section-label" }, "Columns"),
           el("ul", { class: "schema-cols" }, t.columns.map((c) => el("li", {},
             el("code", {}, c.name), el("span", { class: "type" }, c.type),
             c.primary_key ? el("span", { class: "badge" }, "PK") : null,
             fks[c.name] ? el("span", { class: "badge fk" }, "→ " + fks[c.name]) : null,
-            c.values && c.values.length ? el("span", { class: "type" }, c.values.join(", ")) : null)))));
+            c.values && c.values.length ? el("span", { class: "type values" }, "values: " + c.values.join(", ")) : null))),
+          el("div", { class: "schema-section-label" }, `Sample rows (first 5 of ${t.row_count})`),
+          sample);
+        // Fetch sample rows the first time a table is expanded.
+        details.addEventListener("toggle", async () => {
+          if (!details.open || details.dataset.loaded) return;
+          details.dataset.loaded = "1";
+          try {
+            const s = await (await fetch(`/api/schema/${encodeURIComponent(t.name)}/sample`)).json();
+            sample.innerHTML = "";
+            sample.append(el("div", { class: "table-wrap" }, el("table", {},
+              el("thead", {}, el("tr", {}, s.columns.map((c) => el("th", {}, c)))),
+              el("tbody", {}, s.rows.map((row) => el("tr", {}, row.map((v) =>
+                v === null ? el("td", { class: "null" }, "NULL") : el("td", {}, v))))))));
+          } catch { sample.textContent = "Couldn't load sample rows."; delete details.dataset.loaded; }
+        });
+        body.append(details);
       }
       schemaLoaded = true;
     } catch { $("#schema-body").textContent = "Couldn't load the schema."; }

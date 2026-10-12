@@ -239,7 +239,9 @@ def transpile(sql: str, dialects: tuple[str, ...] = ("sqlite", "postgres", "mysq
     out = {}
     for d in dialects:
         try:
-            out[d] = sqlglot.transpile(sql, read="sqlite", write=d, pretty=True)[0]
+            # Quote identifiers outside SQLite: PostgreSQL folds unquoted names to lower case,
+            # so "Customers" must stay quoted to match a mixed-case schema.
+            out[d] = sqlglot.transpile(sql, read="sqlite", write=d, pretty=True, identify=d != "sqlite")[0]
         except Exception:
             out[d] = sql if d == "sqlite" else f"-- could not transpile to {d}\n{sql}"
     return out

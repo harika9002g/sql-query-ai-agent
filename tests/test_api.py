@@ -58,3 +58,12 @@ def test_missing_api_key_returns_503(client, monkeypatch):
     monkeypatch.setattr(main, "llm_configured", lambda: False)
     r = client.post("/api/chat", json={"message": "hi", "thread_id": "x"})
     assert r.status_code == 503 and "API key" in r.json()["detail"]
+
+
+def test_table_sample_endpoint(client):
+    data = client.get("/api/schema/Customers/sample").json()
+    assert data["table"] == "Customers" and data["row_count"] == 200
+    assert "State" in data["columns"] and len(data["rows"]) == 5
+    assert client.get("/api/schema/customers/sample").status_code == 200          # case-insensitive
+    assert client.get("/api/schema/sqlite_master/sample").status_code == 404     # only schema tables
+    assert client.get('/api/schema/Orders";DROP TABLE Orders;--/sample').status_code == 404

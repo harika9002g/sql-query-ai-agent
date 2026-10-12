@@ -89,3 +89,9 @@ def test_extract_sql():
     assert extract_sql("fix this ```sql\nSELECT * FROM Orders;\n```") == "SELECT * FROM Orders"
     assert extract_sql("why does SELECT x FROM y fail?").startswith("SELECT x FROM y")
     assert extract_sql("show me all customers") is None
+
+
+def test_transpile_quotes_identifiers_outside_sqlite():
+    out = transpile("SELECT c.FirstName FROM Customers AS c")
+    assert '"Customers"' in out["postgres"] and "`Customers`" in out["mysql"]
+    assert '"' not in out["sqlite"]

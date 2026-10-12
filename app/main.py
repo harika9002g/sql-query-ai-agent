@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.agent.graph import build_graph
 from app.agent.nodes import STEP_LABELS
 from app.config import ROOT, settings
-from app.db import get_catalog
+from app.db import execute_readonly, get_catalog
 from app.llm import llm_configured
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -102,6 +102,16 @@ def schema() -> dict[str, Any]:
         } for t in cat.tables.values()],
         "ddl": settings.schema_path.read_text(encoding="utf-8"),
     }
+
+
+@app.get("/api/schema/{table}/sample")
+def table_sample(table: str, limit: int = 5) -> dict[str, Any]:
+    """First rows of a table, for the schema browser. Table name is checked against the catalog."""
+    t = get_catalog().table(table)
+    if t is None:
+        raise HTTPException(404, f"Unknown table '{table}'.")
+    res = execute_readonly(f'SELECT * FROM "{t.name}" LIMIT {max(1, min(limit, 20))}')
+    return {"table": t.name, "row_count": t.row_count, "columns": res.columns, "rows": res.rows}
 
 
 @app.post("/api/chat")
