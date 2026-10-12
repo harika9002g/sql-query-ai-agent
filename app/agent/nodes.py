@@ -20,7 +20,7 @@ from app.config import settings
 from app.db import SchemaCatalog, execute_readonly
 from app.guardrails import REFUSAL_DESTRUCTIVE, REFUSAL_OUT_OF_SCOPE, check_input
 from app.llm import structured
-from app.optimizer import analyze
+from app.optimizer import analyze, drop_existing_indexes
 from app.sql_guard import clean_sql, extract_sql, pretty, transpile, validate_sql
 
 log = logging.getLogger(__name__)
@@ -237,7 +237,8 @@ class Nodes:
     def optimize_sql(self, state: AgentState) -> dict:
         analysis = analyze(state["sql"], self.catalog)
         llm_recs = state.get("llm_index_recommendations") or []
-        analysis["index_recommendations"] = list(dict.fromkeys(llm_recs + analysis["index_recommendations"]))
+        analysis["index_recommendations"] = drop_existing_indexes(
+            list(dict.fromkeys(llm_recs + analysis["index_recommendations"])), self.catalog)
         return {"optimization": analysis}
 
     def execute_sql(self, state: AgentState) -> dict:

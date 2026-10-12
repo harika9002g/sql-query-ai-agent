@@ -5,6 +5,7 @@ SQLite's query plan, not only the LLM's opinion.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import sqlglot
@@ -138,6 +139,22 @@ def analyze(sql: str, catalog: SchemaCatalog | None = None) -> dict[str, Any]:
         "unnecessary_joins": unnecessary_joins,
         "cost": cost,
     }
+
+
+_INDEX_REC_RE = re.compile(r"\bON\s+[\"`\[]?(\w+)[\"`\]]?\s*\(\s*[\"`\[]?(\w+)", re.I)
+
+
+def drop_existing_indexes(recs: list[str], catalog: SchemaCatalog | None = None) -> list[str]:
+    """Remove CREATE INDEX advice whose leading column is already indexed (or is the primary key)."""
+    catalog = catalog or get_catalog()
+    kept = []
+    for rec in recs:
+        m = _INDEX_REC_RE.search(rec)
+        table = catalog.table(m.group(1)) if m else None
+        if table and m.group(2).lower() in table.indexed_leading_columns():
+            continue
+        kept.append(rec)
+    return kept
 
 
 def _within(node: exp.Expression, ancestor: exp.Expression) -> bool:

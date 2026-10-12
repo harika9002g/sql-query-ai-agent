@@ -173,6 +173,7 @@ select { border: 1px solid var(--border); background: var(--surface); border-rad
 .tk-kw { color: var(--tk-kw); font-weight: 500; } .tk-str { color: var(--tk-str); } .tk-num { color: var(--tk-num); } .tk-fn { color: var(--tk-fn); } .tk-cmt { color: var(--tk-cmt); font-style: italic; }
 .original { margin-top: 10px; } .original summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
 .explanation { margin: 0; font-size: 14.5px; }
+.explanation p { margin: 0 0 8px; } .explanation p:last-child { margin-bottom: 0; }
 .notes { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
 .notes:empty { display: none; }
 .issue { border-left: 3px solid var(--err); background: var(--err-soft); border-radius: 6px; padding: 8px 10px; margin-top: 10px; font-size: 13px; }

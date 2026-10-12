@@ -81,3 +81,11 @@ def test_optimizer_does_not_flag_row_multiplying_join():
 def test_cost_uses_index_search():
     r = analyze("SELECT OrderID FROM Orders WHERE OrderDate >= '2025-01-01'")
     assert r["cost"]["full_table_scans"] == [] and r["cost"]["index_lookups"] == 1
+
+
+def test_existing_index_recommendations_are_dropped():
+    from app.optimizer import drop_existing_indexes
+    recs = ["CREATE INDEX IF NOT EXISTS idx_orders_orderdate_range ON Orders(OrderDate);",   # already indexed
+            "CREATE INDEX idx_x ON \"Customers\" (CustomerID);",                                # primary key
+            "CREATE INDEX idx_customers_state ON Customers(State);"]                           # genuinely missing
+    assert drop_existing_indexes(recs) == ["CREATE INDEX idx_customers_state ON Customers(State);"]

@@ -272,7 +272,7 @@
 
     // Explanation, issues, notes
     $("#panel-explain").hidden = false;
-    $("#explanation").textContent = r.explanation || "";
+    $("#explanation").innerHTML = md(r.explanation || "");
     const issues = $("#issues"); issues.innerHTML = "";
     for (const i of r.issues || []) issues.append(el("div", { class: "issue" }, el("b", {}, i.problem), i.explanation));
     const notes = $("#notes"); notes.innerHTML = "";

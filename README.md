@@ -6,7 +6,7 @@ Built with **LangGraph** (orchestration), **FastAPI** (API + SSE streaming), **s
 
 | | |
 |---|---|
-| **Live demo** | _add your deployed URL here_ — no login needed |
+| **Live demo** | **https://sql-query-agent-gvah.onrender.com** — no login needed (free hosting: first load after idle takes ~30–60 s) |
 | **Demo video** | _add your video link here_ (script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md)) |
 | **Architecture & workflow** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | **Prompts** | [`docs/PROMPTS.md`](docs/PROMPTS.md) (generated from [`app/prompts.py`](app/prompts.py)) |
@@ -29,7 +29,7 @@ Built with **LangGraph** (orchestration), **FastAPI** (API + SSE streaming), **s
 
 **Frontend:** chat interface · SQL panel with syntax highlighting · explanation panel · results table · validation & performance panel · conversation history · step-by-step loading indicator · error messages · copy SQL.
 
-**Bonus features implemented:** SQL execution (read-only) · follow-up support · query cost estimation (`EXPLAIN QUERY PLAN`-based) · syntax highlighting · multiple dialects (SQLite / PostgreSQL / MySQL output via sqlglot) · CSV export · download `.sql` · dark mode · streaming responses (SSE) · prompt-injection protection · self-correction loop · Docker deployment · unit + integration tests (81).
+**Bonus features implemented:** SQL execution (read-only) · follow-up support · query cost estimation (`EXPLAIN QUERY PLAN`-based) · syntax highlighting · multiple dialects (SQLite / PostgreSQL / MySQL output via sqlglot) · CSV export · download `.sql` · dark mode · streaming responses (SSE) · prompt-injection protection · self-correction loop · Docker deployment · unit + integration tests (82).
 
 ---
 
@@ -74,7 +74,7 @@ docker run -p 8000:8000 -e GROQ_API_KEY=... -e LLM_MODEL=groq:openai/gpt-oss-120
 pytest
 ```
 
-81 tests run offline with no API key needed: the LangGraph workflow is exercised end to end with a scripted fake LLM ([`tests/fakes.py`](tests/fakes.py)).
+82 tests run offline with no API key needed: the LangGraph workflow is exercised end to end with a scripted fake LLM ([`tests/fakes.py`](tests/fakes.py)).
 
 - [`test_graph.py`](tests/test_graph.py): every route through the graph. Generate, follow-up modification, out-of-scope, destructive (natural language and SQL), prompt injection blocked before any LLM call, hallucinated-column self-correction, giving up without returning invalid SQL, `cannot_answer`, ambiguity, debug, optimize with equivalence check, explain, explain-on-broken-SQL → debug, execution off, LLM failure, and thread isolation.
 - [`test_sql_guard.py`](tests/test_sql_guard.py): validator positives/negatives, including writes hidden in CTEs and multi-statement payloads.
@@ -93,6 +93,8 @@ The app is one stateless-image container (plus in-process conversation memory), 
 Other hosts work the same way: install `requirements.txt`, run `python -m app.seed`, start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and set the API key. A `Dockerfile` is also included for container hosts.
 
 Run a **single worker**, because conversation memory is in-process. The public endpoint is rate-limited per IP (`RATE_LIMIT_PER_MIN`, default 20) to protect the API key.
+
+**Live verification (2026-10-12, real Groq `openai/gpt-oss-120b`, deployed app):** NL→SQL with validation, execution and explanation · follow-up modification (`… WHERE State = 'California'`, 200 → 20 rows) · out-of-scope refusal (exact required message) · destructive request refused · prompt injection blocked · optimization (sargable date range; result-equivalence check passed: 229 rows, 16 columns) · debugging (bad column + unquoted date found and fixed) · unanswerable question ("shoe size") refused without inventing columns · streaming UI end to end. All passed.
 
 **Verify a deployment with the real model:** `python scripts/smoke_test.py https://<your-app>.onrender.com` runs the assignment's scenarios (NL→SQL, validation, follow-up, optimize, debug, refusals, injection, no hallucinated columns) and prints PASS/FAIL for each check.
 
@@ -153,7 +155,7 @@ frontend/            index.html · styles.css · app.js (no build step)
 data/schema.sql      sample schema
 docs/                ARCHITECTURE.md · PROMPTS.md · DEMO_SCRIPT.md
 scripts/             ui_preview.py (offline UI dev) · export_prompts.py
-tests/               81 offline tests (fake LLM + mocked Groq HTTP)
+tests/               82 offline tests (fake LLM + mocked Groq HTTP)
 Dockerfile · render.yaml · requirements*.txt · .env.example
 ```
 
