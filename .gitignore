@@ -1,0 +1,27 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python / tooling
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated (rebuilt from data/schema.sql at startup)
+data/*.db
+data/*.db-journal
+
+# Local editor / agent config
+.claude/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
