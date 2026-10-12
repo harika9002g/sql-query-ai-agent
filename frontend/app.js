@@ -146,7 +146,7 @@
       el("h1", {}, "Ask your database anything"),
       el("p", {}, llmReady
         ? "Plain-English questions become validated, read-only SQL over the Retail Co. sample database — with an explanation, performance checks and live results."
-        : "The server has no LLM API key configured yet, so questions can't be answered. Set ANTHROPIC_API_KEY on the server and reload."),
+        : "The server has no LLM API key configured yet, so questions can't be answered. Set GROQ_API_KEY (or another provider key) on the server and reload."),
       el("div", { class: "chips" }, EXAMPLES.map(([tag, q]) =>
         el("button", { class: "chip", type: "button", onclick: () => send(q) }, el("small", {}, tag), q.length > 62 ? q.slice(0, 60) + "…" : q))));
   }

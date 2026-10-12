@@ -29,25 +29,35 @@ Built with **LangGraph** (orchestration), **FastAPI** (API + SSE streaming), **s
 
 **Frontend:** chat interface · SQL panel with syntax highlighting · explanation panel · results table · validation & performance panel · conversation history · step-by-step loading indicator · error messages · copy SQL.
 
-**Bonus features implemented:** SQL execution (read-only) · follow-up support · query cost estimation (`EXPLAIN QUERY PLAN`-based) · syntax highlighting · multiple dialects (SQLite / PostgreSQL / MySQL output via sqlglot) · CSV export · download `.sql` · dark mode · streaming responses (SSE) · prompt-injection protection · self-correction loop · Docker deployment · unit + integration tests (73).
+**Bonus features implemented:** SQL execution (read-only) · follow-up support · query cost estimation (`EXPLAIN QUERY PLAN`-based) · syntax highlighting · multiple dialects (SQLite / PostgreSQL / MySQL output via sqlglot) · CSV export · download `.sql` · dark mode · streaming responses (SSE) · prompt-injection protection · self-correction loop · Docker deployment · unit + integration tests (81).
 
 ---
 
 ## Quick start (local)
 
-Requires Python 3.11+ and an API key for one LLM provider (Claude by default).
+Requires Python 3.11+ and an API key for one LLM provider. The deployed demo uses **GroqCloud's free tier** (`openai/gpt-oss-120b`); Claude and OpenAI are drop-in alternatives.
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-cp .env.example .env               # then put your key in ANTHROPIC_API_KEY=
+cp .env.example .env               # then set GROQ_API_KEY= (free key: console.groq.com/keys)
 uvicorn app.main:app --reload
 ```
 
 Open http://localhost:8000. The sample database (`data/sample.db`) is built automatically on first start from `data/schema.sql` with deterministic seed data. You can also build it yourself with `python -m app.seed`.
 
-**Other providers:** set `OPENAI_API_KEY` + `LLM_MODEL=openai:gpt-4.1`, or `GROQ_API_KEY` + `LLM_MODEL=groq:llama-3.3-70b-versatile`. All settings are listed in [`.env.example`](.env.example).
+### LLM providers
+
+| Provider | Environment variables | Notes |
+|---|---|---|
+| **Groq (free tier)** | `GROQ_API_KEY`, `LLM_MODEL=groq:openai/gpt-oss-120b`, `LLM_EFFORT=low` | Production model with **strict JSON-schema structured outputs** (constrained decoding), used for intent routing and SQL drafts. `LLM_EFFORT` sets gpt-oss `reasoning_effort`. |
+| Anthropic | `ANTHROPIC_API_KEY`, `LLM_MODEL=anthropic:claude-opus-5-5` | Native JSON-schema output; `LLM_EFFORT` sets Claude effort. |
+| OpenAI | `OPENAI_API_KEY`, `LLM_MODEL=openai:gpt-4.1` | Native JSON-schema output. |
+
+Always set `LLM_MODEL` explicitly. Without it, the provider is inferred from whichever key is present, with Anthropic first. Other Groq models also work; models without strict-schema support fall back to tool calling.
+
+**Groq free-tier budget.** Each question makes about 3 model calls, roughly 3–4K tokens. Groq's published sample free-tier limits for `openai/gpt-oss-120b` are 30 requests/min, 1K requests/day, 8K tokens/min and 200K tokens/day, shared across your Groq organization. That works out to about 2 questions per minute and roughly 50 per day. Your exact limits are on [console.groq.com/settings/limits](https://console.groq.com/settings/limits). When a limit is hit, the UI shows "The language model is rate-limited right now…" instead of failing. The public deployment caps traffic at `RATE_LIMIT_PER_MIN=10` per IP to protect the quota.
 
 **No key yet?** `python scripts/ui_preview.py` runs the real API, graph, validator and database with a scripted stand-in model that only understands the example prompts. It's useful for UI work and is labelled `offline-scripted-model` in the UI.
 
@@ -55,7 +65,7 @@ Open http://localhost:8000. The sample database (`data/sample.db`) is built auto
 
 ```bash
 docker build -t sql-agent .
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... sql-agent
+docker run -p 8000:8000 -e GROQ_API_KEY=... -e LLM_MODEL=groq:openai/gpt-oss-120b sql-agent
 ```
 
 ### Tests
@@ -64,12 +74,13 @@ docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... sql-agent
 pytest
 ```
 
-73 tests run offline in about 10 s, with no API key needed: the LangGraph workflow is exercised end to end with a scripted fake LLM ([`tests/fakes.py`](tests/fakes.py)).
+81 tests run offline with no API key needed: the LangGraph workflow is exercised end to end with a scripted fake LLM ([`tests/fakes.py`](tests/fakes.py)).
 
 - [`test_graph.py`](tests/test_graph.py): every route through the graph. Generate, follow-up modification, out-of-scope, destructive (natural language and SQL), prompt injection blocked before any LLM call, hallucinated-column self-correction, giving up without returning invalid SQL, `cannot_answer`, ambiguity, debug, optimize with equivalence check, explain, explain-on-broken-SQL → debug, execution off, LLM failure, and thread isolation.
 - [`test_sql_guard.py`](tests/test_sql_guard.py): validator positives/negatives, including writes hidden in CTEs and multi-statement payloads.
 - [`test_guardrails_and_db.py`](tests/test_guardrails_and_db.py): injection heuristics without false positives, a read-only connection that refuses writes even when the validator is bypassed, and the optimizer rules.
 - [`test_api.py`](tests/test_api.py): REST + SSE endpoints, request validation, missing-key handling.
+- [`test_llm_provider.py`](tests/test_llm_provider.py): provider selection and key-from-env checks. Also runs the real `ChatGroq` client against a mocked Groq HTTP API. That covers the strict json_schema request shape, the full graph, streaming (structured calls don't stream; explanation tokens do) and 429 handling.
 
 ---
 
@@ -77,7 +88,7 @@ pytest
 
 The app is one stateless-image container (plus in-process conversation memory), so any Docker host works.
 
-**Render (blueprint included, native Python runtime — no Docker needed):** Render → *New → Blueprint* → connect this GitHub repo → enter `ANTHROPIC_API_KEY` when prompted → *Apply*. [`render.yaml`](render.yaml) installs `requirements.txt`, builds the sample database, starts uvicorn on `$PORT`, and sets the health check and rate limit. On the free plan the service sleeps when idle; the first request after a pause takes ~30–60 s to wake.
+**Render (blueprint included, native Python runtime — no Docker needed):** Render → *New → Blueprint* → connect this GitHub repo → enter `GROQ_API_KEY` when prompted → *Apply*. [`render.yaml`](render.yaml) installs `requirements.txt`, builds the sample database, starts uvicorn on `$PORT`, and sets `LLM_MODEL=groq:openai/gpt-oss-120b`, the health check and the rate limit. On the free plan the service sleeps when idle; the first request after a pause takes ~30–60 s to wake.
 
 Other hosts work the same way: install `requirements.txt`, run `python -m app.seed`, start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and set the API key. A `Dockerfile` is also included for container hosts.
 
@@ -142,7 +153,7 @@ frontend/            index.html · styles.css · app.js (no build step)
 data/schema.sql      sample schema
 docs/                ARCHITECTURE.md · PROMPTS.md · DEMO_SCRIPT.md
 scripts/             ui_preview.py (offline UI dev) · export_prompts.py
-tests/               73 offline tests (fake LLM)
+tests/               81 offline tests (fake LLM + mocked Groq HTTP)
 Dockerfile · render.yaml · requirements*.txt · .env.example
 ```
 

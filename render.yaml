@@ -1,4 +1,4 @@
-# Render Blueprint: New → Blueprint → select this repo → enter ANTHROPIC_API_KEY when prompted → Apply.
+# Render Blueprint: New → Blueprint → select this repo → enter GROQ_API_KEY when prompted → Apply.
 services:
   - type: web
     name: sql-query-agent
@@ -11,9 +11,11 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.10
-      - key: ANTHROPIC_API_KEY
+      - key: GROQ_API_KEY
         sync: false          # secret: entered in the Render dashboard, never committed
+      - key: LLM_MODEL
+        value: groq:openai/gpt-oss-120b
       - key: LLM_EFFORT
         value: low
       - key: RATE_LIMIT_PER_MIN
-        value: "20"
+        value: "10"          # protects the Groq free-tier quota (shared per organization)

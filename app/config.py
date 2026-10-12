@@ -21,14 +21,14 @@ def _default_model() -> str:
     if os.getenv("OPENAI_API_KEY"):
         return "openai:gpt-4.1"
     if os.getenv("GROQ_API_KEY"):
-        return "groq:llama-3.3-70b-versatile"
+        return "groq:openai/gpt-oss-120b"
     return "anthropic:claude-opus-5-5"
 
 
 @dataclass(frozen=True)
 class Settings:
     llm_model: str = field(default_factory=_default_model)
-    # Effort for Anthropic models; "low" keeps latency chat-friendly for this structured task.
+    # Reasoning effort (Claude effort / Groq gpt-oss reasoning_effort); "low" keeps latency and tokens down.
     llm_effort: str = os.getenv("LLM_EFFORT", "low")
     db_path: Path = Path(os.getenv("DB_PATH", ROOT / "data" / "sample.db"))
     schema_path: Path = ROOT / "data" / "schema.sql"

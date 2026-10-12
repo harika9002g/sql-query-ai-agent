@@ -19,7 +19,7 @@ flowchart LR
         DB[("SQLite sample DB<br/>read-only connection<br/>+ authorizer + timeout")]
     end
 
-    LLM["LLM provider<br/>Claude (default) · OpenAI · Groq<br/>via LangChain init_chat_model"]
+    LLM["LLM provider<br/>Groq gpt-oss-120b (deployed) · Claude · OpenAI<br/>via LangChain init_chat_model"]
 
     UI -- "POST message + thread_id" --> API
     API -- "SSE: step · token · result" --> UI
@@ -106,7 +106,7 @@ All other fields are per-turn and reset by `guard_input`. The browser keeps its 
 - **Validation uses the real engine as the final check.** sqlglot is permissive about functions and dialect quirks. Compiling with `EXPLAIN QUERY PLAN` catches the rest without executing anything.
 - **One `generate_sql` node, three modes.** Generate, debug and optimize share the same validate → retry loop, so every path gets identical guarantees.
 - **Equivalence checking for optimizations.** Readability and performance rewrites are verified by running both queries, so "optimized" never silently means "different".
-- **Provider-agnostic.** `init_chat_model("provider:model")`. The default is Claude (`claude-opus-5-5`, effort `low` for chat latency) with native JSON-schema structured output; OpenAI and Groq work by changing env vars.
+- **Provider-agnostic.** `init_chat_model("provider:model")`. The deployment uses Groq's free tier (`openai/gpt-oss-120b`, `reasoning_effort=low`) with **strict** JSON-schema structured outputs. Claude (`claude-opus-5-5`) and OpenAI use native JSON-schema output. Switching providers is two env vars (`LLM_MODEL` + its key); see `app/llm.py`.
 - **Streaming UX.** The UI subscribes to LangGraph `updates` (one progress step per node) and `messages` (explanation tokens) over Server-Sent Events.
 
 ## Limitations / next steps

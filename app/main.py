@@ -77,7 +77,7 @@ def _inputs(req: ChatRequest) -> tuple[dict, dict]:
 def _require_llm() -> None:
     if not llm_configured():
         raise HTTPException(503, f"No API key configured for model '{settings.llm_model}'. "
-                                 "Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / GROQ_API_KEY with LLM_MODEL).")
+                                 "Set GROQ_API_KEY with LLM_MODEL=groq:openai/gpt-oss-120b (or another provider key).")
 
 
 # ---------------------------------------------------------------- API
