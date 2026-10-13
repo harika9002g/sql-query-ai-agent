@@ -7,9 +7,9 @@ Built with **LangGraph** (orchestration), **FastAPI** (API + SSE streaming), **s
 | | |
 |---|---|
 | **Live demo** | **https://sql-query-agent-gvah.onrender.com** — no login needed (free hosting: first load after idle takes ~30–60 s) |
-| **Demo video** | _add your video link here_ (script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md)) |
+| **Demo video** | _add your video link here_ |
 | **Architecture & workflow** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-| **Prompts** | [`docs/PROMPTS.md`](docs/PROMPTS.md) (generated from [`app/prompts.py`](app/prompts.py)) |
+| **Prompts** | [`app/prompts.py`](app/prompts.py): every prompt the agent uses, with the design notes at the top of the file |
 | **Sample schema** | [`data/schema.sql`](data/schema.sql) |
 
 ---
@@ -157,7 +157,7 @@ app/
     nodes.py         node implementations
     state.py         AgentState (checkpointed per thread)
     schemas.py       structured-output models for the LLM
-  prompts.py         every prompt (→ docs/PROMPTS.md)
+  prompts.py         every prompt the agent sends to the LLM
   sql_guard.py       deterministic SQL validator + dialect transpiler
   optimizer.py       hints, index advice, unnecessary joins, cost
   guardrails.py      input checks: injection, destructive SQL, size
@@ -167,8 +167,8 @@ app/
   config.py          env-driven settings
 frontend/            index.html · styles.css · app.js (no build step)
 data/schema.sql      sample schema
-docs/                ARCHITECTURE.md · PROMPTS.md · DEMO_SCRIPT.md
-scripts/             smoke_test.py (live checks) · ui_preview.py (offline UI dev) · export_prompts.py
+docs/                ARCHITECTURE.md (architecture + LangGraph workflow)
+scripts/             smoke_test.py (live checks) · ui_preview.py (offline UI dev)
 tests/               84 offline tests (fake LLM + mocked Groq HTTP)
 Dockerfile · render.yaml · requirements*.txt · .env.example
 ```

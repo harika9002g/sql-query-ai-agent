@@ -1,4 +1,4 @@
-"""All LLM prompts used by the agent (also documented in docs/PROMPTS.md).
+"""All LLM prompts used by the agent.
 
 Conventions:
 - User-controlled text is always wrapped in <user_request> / <user_sql> tags and the system
