@@ -7,7 +7,7 @@ Built with **LangGraph** (orchestration), **FastAPI** (API + SSE streaming), **s
 | | |
 |---|---|
 | **Live demo** | **https://sql-query-agent-gvah.onrender.com** — no login needed (free hosting: first load after idle takes ~30–60 s) |
-| **Demo video** | _add your video link here_ |
+| **Demo video** | **https://holistic-quokka-from-atlantis.clueso.site/share/276cfae0-01c1-4778-9800-fd2d209229d1** (about 5 min walkthrough) |
 | **Architecture & workflow** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | **Prompts** | [`app/prompts.py`](app/prompts.py): every prompt the agent uses, with the design notes at the top of the file |
 | **Sample schema** | [`data/schema.sql`](data/schema.sql) |
